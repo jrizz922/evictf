@@ -62,7 +62,10 @@ evictf() {
 	while IFS= read -r -d $'\0' file; do
 		# Attempt every file, recording failures instead of stopping at the first
 		# error so that the entire directory tree is processed.
-		if brctl evict "$file"; then
+		# brctl may emit an uncaught NSException diagnostic for an individual
+		# file.  Treat that invocation as a normal failure so the scan can
+		# continue without exposing the runtime abort message to the caller.
+		if brctl evict "$file" 2>/dev/null; then
 			((succeeded_count++))
 		else
 			((failed_count++))
